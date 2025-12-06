@@ -1,26 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
 using HarmonyLib;
-using UnityEngine;
-using XDMenuPlay.Customise;
 
 namespace CustomMatcaps.Patches;
 
 [HarmonyPatch]
-internal class PatchCustomiseOpenMenu
+internal class PatchOnAssetsReplaced
 {
-    [HarmonyPatch(typeof(XDCustomiseMenu), nameof(XDCustomiseMenu.OnCustomiseMenuBecameActive))]
+    [HarmonyPatch(typeof(WheelVisuals), nameof(WheelVisuals.OnAssetsReplaced))]
     [HarmonyPostfix]
-    private static void Patch(XDCustomiseMenu __instance)
+    private static void Patch()
     {
-        Plugin.Log.LogInfo("customize menu became active");
+        Plugin.Log.LogInfo("customize menu preview updated");
         
         Task.Run(async () =>
         {
             try
             {
-                await Task.Delay(100); // wtf
-                await Awaitable.MainThreadAsync();
                 await Plugin.ReinitializeWheel();
             }
             catch (Exception e)
