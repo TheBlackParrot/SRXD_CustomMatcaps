@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BepInEx.Configuration;
 using CustomMatcaps.Classes;
@@ -13,14 +14,9 @@ public partial class Plugin
     internal static ConfigEntry<string> TrackStripMatcap = null!;
     internal static ConfigEntry<string> WheelMatcap = null!;
     internal static ConfigEntry<string> WheelBackingMatcap = null!;
-    
-    internal static ConfigEntry<string> CharacterPinkMatcap = null!;
-    internal static ConfigEntry<string> CharacterBlueMatcap = null!;
-    internal static ConfigEntry<string> CharacterWhiteMatcap = null!;
-    internal static ConfigEntry<string> CharacterBlackMatcap = null!;
-    internal static ConfigEntry<string> CharacterBlackGreenMatcap = null!;
-    internal static ConfigEntry<string> CharacterGreenMatcap = null!;
-    internal static ConfigEntry<string> CharacterPurpleMatcap = null!;
+
+    internal static ConfigEntry<bool> ApplyMatcapsToCharacters = null!;
+    private static readonly List<ConfigEntry<string>> CharacterMaterialFilenames = [];
 
     private void RegisterConfigEntries()
     {
@@ -30,36 +26,24 @@ public partial class Plugin
             "Filename of the matcap texture to use for the wheel");
         WheelBackingMatcap = Config.Bind("Matcaps", nameof(WheelBackingMatcap), "default", 
             "Filename of the matcap texture to use for meshes behind the note wedges on the wheel");
+
+        ApplyMatcapsToCharacters = Config.Bind("Characters", nameof(ApplyMatcapsToCharacters), true,
+            "Apply matcap overrides to character models");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap texture");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap texture");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap texture");
-        
-        CharacterPinkMatcap = Config.Bind("Matcaps", nameof(CharacterPinkMatcap), "default", 
-            "Filename of the matcap texture to use for the mascot/character's default pink material");
-        CharacterBlueMatcap = Config.Bind("Matcaps", nameof(CharacterBlueMatcap), "default", 
-            "Filename of the matcap texture to use for the mascot/character's default blue material");
-        CharacterWhiteMatcap = Config.Bind("Matcaps", nameof(CharacterWhiteMatcap), "default", 
-            "Filename of the matcap texture to use for the mascot/character's default white material");
-        CharacterBlackMatcap = Config.Bind("Matcaps", nameof(CharacterBlackMatcap), "default", 
-            "Filename of the matcap texture to use for the mascot/character's default black material");
-        CharacterBlackGreenMatcap = Config.Bind("Matcaps", nameof(CharacterBlackGreenMatcap), "default", 
-            "Filename of the matcap texture to use for the mascot/character's default green-tinted black material");
-        CharacterGreenMatcap = Config.Bind("Matcaps", nameof(CharacterGreenMatcap), "default", 
-            "Filename of the matcap texture to use for the mascot/character's default green material");
-        CharacterPurpleMatcap = Config.Bind("Matcaps", nameof(CharacterPurpleMatcap), "default", 
-            "Filename of the matcap texture to use for the mascot/character's default purple material");
-        
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(CharacterPinkMatcap)}", "Pink material matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(CharacterBlueMatcap)}", "Blue material matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(CharacterWhiteMatcap)}", "White material matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(CharacterBlackMatcap)}", "Black material matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(CharacterBlackGreenMatcap)}", "Green-tinted black material matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(CharacterGreenMatcap)}", "Green material matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(CharacterPurpleMatcap)}", "Purple material matcap");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", "Override character matcaps");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
+        
+        for (int idx = 0; idx < 7; idx++)
+        {
+            TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterial{idx + 1}", $"Character material {idx + 1}");
+            CharacterMaterialFilenames.Add(Config.Bind("Matcaps", $"CharacterMaterial{idx + 1}", "default",
+                $"Filename of the matcap texture to use for the mascot/character's material slot #{idx + 1}"));
+        }
     }
 
     private static void CreateModPage()
@@ -188,235 +172,56 @@ public partial class Plugin
         
         UIHelper.CreateSectionHeader(modGroup, "CharacterMaterialsHeader", $"{TRANSLATION_PREFIX}CharacterMaterials", false);
         
-        #region CharacterPinkMatcap
-        CustomGroup characterPinkMatcapGroup = UIHelper.CreateGroup(modGroup, "CharacterPinkMatcapGroup");
-        characterPinkMatcapGroup.LayoutDirection = Axis.Horizontal;
-        UIHelper.CreateLabel(characterPinkMatcapGroup, "CharacterPinkMatcapLabel", $"{TRANSLATION_PREFIX}{nameof(CharacterPinkMatcap)}");
-        CustomInputField characterPinkMatcapInput = UIHelper.CreateInputField(characterPinkMatcapGroup, "CharacterPinkMatcapInput",
-            (oldValue, newValue) =>
+        #region ApplyMatcapsToCharacters
+        CustomGroup applyMatcapsToCharactersGroup = UIHelper.CreateGroup(modGroup, "ApplyMatcapsToCharactersGroup");
+        applyMatcapsToCharactersGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateSmallToggle(applyMatcapsToCharactersGroup, nameof(ApplyMatcapsToCharacters),
+            $"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", ApplyMatcapsToCharacters.Value, value =>
             {
-                if (oldValue == newValue)
-                {
-                    return;
-                }
-            
-                CharacterPinkMatcap.Value = newValue;
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        await Awaitable.MainThreadAsync();
-                    
-                        await _characterPinkMaterialMatcapObject?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
-                            ? "default"
-                            : $"{DataPath}/{CharacterPinkMatcap.Value}")!;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.LogError(e);
-                    }
-                });
+                ApplyMatcapsToCharacters.Value = value;
+                Patches.PatchOnAssetsReplaced.ResetCharacterMaterials();
             });
-        characterPinkMatcapInput.InputField.SetText(CharacterPinkMatcap.Value);
         #endregion
         
-        #region CharacterBlueMatcap
-        CustomGroup characterBlueMatcapGroup = UIHelper.CreateGroup(modGroup, "CharacterBlueMatcapGroup");
-        characterBlueMatcapGroup.LayoutDirection = Axis.Horizontal;
-        UIHelper.CreateLabel(characterBlueMatcapGroup, "CharacterBlueMatcapLabel", $"{TRANSLATION_PREFIX}{nameof(CharacterBlueMatcap)}");
-        CustomInputField characterBlueMatcapInput = UIHelper.CreateInputField(characterBlueMatcapGroup, "CharacterBlueMatcapInput",
-            (oldValue, newValue) =>
-            {
-                if (oldValue == newValue)
-                {
-                    return;
-                }
+        #region CharacterMaterials
+        for (int idx = 0; idx < 7; idx++)
+        {
+            int humanIdx = idx + 1;
             
-                CharacterBlueMatcap.Value = newValue;
+            CustomGroup characterMaterialGroup = UIHelper.CreateGroup(modGroup, $"CharacterMaterial{humanIdx}Group");
+            characterMaterialGroup.LayoutDirection = Axis.Horizontal;
+            UIHelper.CreateLabel(characterMaterialGroup, $"CharacterMaterial{humanIdx}Label", $"{TRANSLATION_PREFIX}CharacterMaterial{humanIdx}");
 
-                Task.Run(async () =>
+            int capturedIdx = idx;
+            CustomInputField characterMaterialInput = UIHelper.CreateInputField(characterMaterialGroup, $"CharacterMaterial{humanIdx}Input",
+                (oldValue, newValue) =>
                 {
-                    try
+                    if (oldValue == newValue)
                     {
-                        await Awaitable.MainThreadAsync();
-                    
-                        await _characterBlueMaterialMatcapObject?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
-                            ? "default"
-                            : $"{DataPath}/{CharacterBlueMatcap.Value}")!;
+                        return;
                     }
-                    catch (Exception e)
-                    {
-                        Log.LogError(e);
-                    }
-                });
-            });
-        characterBlueMatcapInput.InputField.SetText(CharacterBlueMatcap.Value);
-        #endregion
-        
-        #region CharacterWhiteMatcap
-        CustomGroup characterWhiteMatcapGroup = UIHelper.CreateGroup(modGroup, "CharacterWhiteMatcapGroup");
-        characterWhiteMatcapGroup.LayoutDirection = Axis.Horizontal;
-        UIHelper.CreateLabel(characterWhiteMatcapGroup, "CharacterWhiteMatcapLabel", $"{TRANSLATION_PREFIX}{nameof(CharacterWhiteMatcap)}");
-        CustomInputField characterWhiteMatcapInput = UIHelper.CreateInputField(characterWhiteMatcapGroup, "CharacterWhiteMatcapInput",
-            (oldValue, newValue) =>
-            {
-                if (oldValue == newValue)
-                {
-                    return;
-                }
             
-                CharacterWhiteMatcap.Value = newValue;
+                    CharacterMaterialFilenames[capturedIdx].Value = newValue;
 
-                Task.Run(async () =>
-                {
-                    try
+                    Task.Run(async () =>
                     {
-                        await Awaitable.MainThreadAsync();
-                    
-                        await _characterWhiteMaterialMatcapObject?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
-                            ? "default"
-                            : $"{DataPath}/{CharacterWhiteMatcap.Value}")!;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.LogError(e);
-                    }
+                        try
+                        {
+                            await Awaitable.MainThreadAsync();
+
+                            await CharacterMaterialMatcapObjects[capturedIdx]?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
+                                ? "default"
+                                : $"{DataPath}/{CharacterMaterialFilenames[capturedIdx].Value}")!;
+                        }
+                        catch (Exception e)
+                        {
+                            Log.LogError(e);
+                        }
+                    });
                 });
-            });
-        characterWhiteMatcapInput.InputField.SetText(CharacterWhiteMatcap.Value);
-        #endregion
-        
-        #region CharacterBlackMatcap
-        CustomGroup characterBlackMatcapGroup = UIHelper.CreateGroup(modGroup, "CharacterBlackMatcapGroup");
-        characterBlackMatcapGroup.LayoutDirection = Axis.Horizontal;
-        UIHelper.CreateLabel(characterBlackMatcapGroup, "CharacterBlackMatcapLabel", $"{TRANSLATION_PREFIX}{nameof(CharacterBlackMatcap)}");
-        CustomInputField characterBlackMatcapInput = UIHelper.CreateInputField(characterBlackMatcapGroup, "CharacterBlackMatcapInput",
-            (oldValue, newValue) =>
-            {
-                if (oldValue == newValue)
-                {
-                    return;
-                }
             
-                CharacterBlackMatcap.Value = newValue;
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        await Awaitable.MainThreadAsync();
-                    
-                        await _characterBlackMaterialMatcapObject?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
-                            ? "default"
-                            : $"{DataPath}/{CharacterBlackMatcap.Value}")!;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.LogError(e);
-                    }
-                });
-            });
-        characterBlackMatcapInput.InputField.SetText(CharacterBlackMatcap.Value);
-        #endregion
-        
-        #region CharacterBlackGreenMatcap
-        CustomGroup characterBlackGreenMatcapGroup = UIHelper.CreateGroup(modGroup, "CharacterBlackGreenMatcapGroup");
-        characterBlackGreenMatcapGroup.LayoutDirection = Axis.Horizontal;
-        UIHelper.CreateLabel(characterBlackGreenMatcapGroup, "CharacterBlackGreenMatcapLabel", $"{TRANSLATION_PREFIX}{nameof(CharacterBlackGreenMatcap)}");
-        CustomInputField characterBlackGreenMatcapInput = UIHelper.CreateInputField(characterBlackGreenMatcapGroup, "CharacterBlackGreenMatcapInput",
-            (oldValue, newValue) =>
-            {
-                if (oldValue == newValue)
-                {
-                    return;
-                }
-            
-                CharacterBlackGreenMatcap.Value = newValue;
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        await Awaitable.MainThreadAsync();
-                    
-                        await _characterBlackGreenMaterialMatcapObject?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
-                            ? "default"
-                            : $"{DataPath}/{CharacterBlackGreenMatcap.Value}")!;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.LogError(e);
-                    }
-                });
-            });
-        characterBlackGreenMatcapInput.InputField.SetText(CharacterBlackGreenMatcap.Value);
-        #endregion
-        
-        #region CharacterGreenMatcap
-        CustomGroup characterGreenMatcapGroup = UIHelper.CreateGroup(modGroup, "CharacterGreenMatcapGroup");
-        characterGreenMatcapGroup.LayoutDirection = Axis.Horizontal;
-        UIHelper.CreateLabel(characterGreenMatcapGroup, "CharacterGreenMatcapLabel", $"{TRANSLATION_PREFIX}{nameof(CharacterGreenMatcap)}");
-        CustomInputField characterGreenMatcapInput = UIHelper.CreateInputField(characterGreenMatcapGroup, "CharacterGreenMatcapInput",
-            (oldValue, newValue) =>
-            {
-                if (oldValue == newValue)
-                {
-                    return;
-                }
-            
-                CharacterGreenMatcap.Value = newValue;
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        await Awaitable.MainThreadAsync();
-                    
-                        await _characterGreenMaterialMatcapObject?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
-                            ? "default"
-                            : $"{DataPath}/{CharacterGreenMatcap.Value}")!;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.LogError(e);
-                    }
-                });
-            });
-        characterGreenMatcapInput.InputField.SetText(CharacterGreenMatcap.Value);
-        #endregion
-        
-        #region CharacterPurpleMatcap
-        CustomGroup characterPurpleMatcapGroup = UIHelper.CreateGroup(modGroup, "CharacterPurpleMatcapGroup");
-        characterPurpleMatcapGroup.LayoutDirection = Axis.Horizontal;
-        UIHelper.CreateLabel(characterPurpleMatcapGroup, "CharacterPurpleMatcapLabel", $"{TRANSLATION_PREFIX}{nameof(CharacterPurpleMatcap)}");
-        CustomInputField characterPurpleMatcapInput = UIHelper.CreateInputField(characterPurpleMatcapGroup, "CharacterPurpleMatcapInput",
-            (oldValue, newValue) =>
-            {
-                if (oldValue == newValue)
-                {
-                    return;
-                }
-            
-                CharacterPurpleMatcap.Value = newValue;
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        await Awaitable.MainThreadAsync();
-                    
-                        await _characterPurpleMaterialMatcapObject?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
-                            ? "default"
-                            : $"{DataPath}/{CharacterPurpleMatcap.Value}")!;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.LogError(e);
-                    }
-                });
-            });
-        characterPurpleMatcapInput.InputField.SetText(CharacterPurpleMatcap.Value);
+            characterMaterialInput.InputField.SetText(CharacterMaterialFilenames[idx].Value);
+        }
         #endregion
     }
 }

@@ -16,10 +16,10 @@ internal class ReplaceableMatcapObject
     private static readonly int ReflectionMapId = Shader.PropertyToID("_ReflectionMap");
     private static readonly int TexturePropertyId = Shader.PropertyToID("_Texture");
 
-    private readonly Material? _material;
+    internal readonly Material? MaterialObject;
 
     private readonly Texture2D? _defaultMatcap;
-    private Texture2D? _customMatcap = Texture2D.blackTexture;
+    private Texture2D? _customMatcap = Texture2D.whiteTexture;
 
     public ReplaceableMatcapObject(GameObject rootObject)
     {
@@ -35,8 +35,8 @@ internal class ReplaceableMatcapObject
 
         try
         {
-            _material = renderer.sharedMaterial;
-            _defaultMatcap = _material.GetTexture(MatCapTexId) as Texture2D;
+            MaterialObject = renderer.sharedMaterial;
+            _defaultMatcap = MaterialObject.GetTexture(MatCapTexId) as Texture2D;
         }
         catch (Exception)
         {
@@ -44,12 +44,9 @@ internal class ReplaceableMatcapObject
         }
     }
     
-    public ReplaceableMatcapObject(Material material, Shader replacementShader)
+    public ReplaceableMatcapObject(Shader replacementShader)
     {
-        material.shader = replacementShader;
-        material.SetTexture(MatCapTexId, Texture2D.whiteTexture);
-        
-        _material = material;
+        MaterialObject = new Material(replacementShader);
         _defaultMatcap = Texture2D.whiteTexture;
         /*
         Plugin.Log.LogInfo($"Material {material.name}:");
@@ -65,7 +62,7 @@ internal class ReplaceableMatcapObject
 
     public async Task SetCustomMatcap(string path)
     {
-        if (_material == null)
+        if (MaterialObject == null)
         {
             return;
         }
@@ -76,16 +73,16 @@ internal class ReplaceableMatcapObject
             return;
         }
             
-        _material.SetColor(TintColorId, Color.white);
-        _material.SetColor(HighlightTintColorId, Color.black);
-        _material.SetColor(ReflectionMultiplyId, Color.black); // reflection strength, give this a setting
-        _material.SetTexture(MatCapHighlightTexId, Texture2D.blackTexture);
-        _material.SetTexture(ReflectionMapId, Plugin.BlankCubemap);
+        MaterialObject.SetColor(TintColorId, Color.white);
+        MaterialObject.SetColor(HighlightTintColorId, Color.black);
+        MaterialObject.SetColor(ReflectionMultiplyId, Color.black); // reflection strength, give this a setting
+        MaterialObject.SetTexture(MatCapHighlightTexId, Texture2D.blackTexture);
+        MaterialObject.SetTexture(ReflectionMapId, Plugin.BlankCubemap);
 
-        _material.SetTexture(MatCapTexId, _customMatcap);
-        if (_material.HasProperty(TexturePropertyId))
+        MaterialObject.SetTexture(MatCapTexId, _customMatcap);
+        if (MaterialObject.HasProperty(TexturePropertyId))
         {
-            _material.SetTexture(TexturePropertyId, _customMatcap);
+            MaterialObject.SetTexture(TexturePropertyId, _customMatcap);
         }
     }
 }
