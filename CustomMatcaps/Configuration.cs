@@ -30,9 +30,9 @@ public partial class Plugin
         ApplyMatcapsToCharacters = Config.Bind("Characters", nameof(ApplyMatcapsToCharacters), true,
             "Apply matcap overrides to character models");
         
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap texture");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap texture");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap texture");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", "Override character matcaps");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
@@ -40,7 +40,7 @@ public partial class Plugin
         
         for (int idx = 0; idx < 7; idx++)
         {
-            TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterial{idx + 1}", $"Character material {idx + 1}");
+            TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");
             CharacterMaterialFilenames.Add(Config.Bind("Matcaps", $"CharacterMaterial{idx + 1}", "default",
                 $"Filename of the matcap texture to use for the mascot/character's material slot #{idx + 1}"));
         }

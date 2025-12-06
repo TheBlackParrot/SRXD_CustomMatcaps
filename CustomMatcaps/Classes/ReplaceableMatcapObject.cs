@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 // ReSharper disable ConvertToPrimaryConstructor
@@ -48,16 +47,6 @@ internal class ReplaceableMatcapObject
     {
         MaterialObject = new Material(replacementShader);
         _defaultMatcap = Texture2D.whiteTexture;
-        /*
-        Plugin.Log.LogInfo($"Material {material.name}:");
-        for (MaterialPropertyType type = MaterialPropertyType.Float; type <= MaterialPropertyType.ComputeBuffer; type++)
-        {
-            foreach (string propertyName in material.GetPropertyNames(type))
-            {
-                Plugin.Log.LogInfo($"{propertyName} ({type})");
-            }
-        }
-        */
     }
 
     public async Task SetCustomMatcap(string path)
@@ -75,7 +64,7 @@ internal class ReplaceableMatcapObject
             
         MaterialObject.SetColor(TintColorId, Color.white);
         MaterialObject.SetColor(HighlightTintColorId, Color.black);
-        MaterialObject.SetColor(ReflectionMultiplyId, Color.black); // reflection strength, give this a setting
+        MaterialObject.SetColor(ReflectionMultiplyId, Color.black);
         MaterialObject.SetTexture(MatCapHighlightTexId, Texture2D.blackTexture);
         MaterialObject.SetTexture(ReflectionMapId, Plugin.BlankCubemap);
 

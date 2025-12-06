@@ -17,6 +17,7 @@ internal static class MatcapTextureCache
             return cachedTexture;
         }
         
+        Plugin.Log.LogInfo($"Loading texture {Path.GetFileName(path)}");
         byte[] bytes = await File.ReadAllBytesAsync(path);
         
         await Awaitable.MainThreadAsync();
@@ -30,6 +31,7 @@ internal static class MatcapTextureCache
         }
         catch (ArgumentException)
         {
+            Plugin.Log.LogInfo("Image already loaded");
             texture = Cache[path];
         }
         

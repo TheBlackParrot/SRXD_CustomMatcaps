@@ -61,17 +61,6 @@ public partial class Plugin : BaseUnityPlugin
                 Log.LogError(e);
             }
         });
-
-        Track.OnStartedPlayingTrack += async (_, _) =>
-        {
-            await Awaitable.MainThreadAsync();
-            
-            await _trackStripSolidMatcapObject?.SetCustomMatcap(TrackStripMatcap.Value.ToLowerInvariant() == "default"
-                ? "default"
-                : $"{DataPath}/{TrackStripMatcap.Value}")!;
-
-            await ReinitializeWheel();
-        };
     }
 
     internal static Cubemap? BlankCubemap;
@@ -165,8 +154,7 @@ public partial class Plugin : BaseUnityPlugin
                 {
                     continue;
                 }
-            
-                Log.LogInfo($"Found wheel mesh part {childObject.name}");
+                
                 WheelObjects.Add(visual.transform.GetChild(idx).gameObject);
             }
 
@@ -178,7 +166,6 @@ public partial class Plugin : BaseUnityPlugin
                     continue;
                 }
                 
-                Log.LogInfo($"Found wheel wedge backing part {childObject.transform.Find("WedgeBacking")}");
                 WheelBackingObjects.Add(childObject.transform.Find("WedgeBacking").gameObject);
             }
         }

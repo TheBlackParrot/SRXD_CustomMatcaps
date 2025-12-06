@@ -17,8 +17,6 @@ internal class PatchOnAssetsReplaced
     [HarmonyPostfix]
     private static void PatchWheelAssets()
     {
-        Plugin.Log.LogInfo("customize menu preview updated");
-        
         Task.Run(async () =>
         {
             try
@@ -56,7 +54,6 @@ internal class PatchOnAssetsReplaced
         }
         _previousCharacterConfigId = __instance.currentAssistantConfig.id;
         
-        Plugin.Log.LogInfo($"original method: {__originalMethod.Name}");
         _menuCharacterAnimationHandler = __instance;
         __instance.mainMesh.GetSharedMaterials(_previousMaterials);
         __instance.mainMesh.SetSharedMaterials(Plugin.CharacterMaterials);
