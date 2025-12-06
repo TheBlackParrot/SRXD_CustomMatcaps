@@ -13,7 +13,6 @@ internal class ReplaceableMatcapObject
     private static readonly int HighlightTintColorId = Shader.PropertyToID("_HighlightTintColor");
     private static readonly int ReflectionMultiplyId = Shader.PropertyToID("_ReflectionMultiply");
     private static readonly int ReflectionMapId = Shader.PropertyToID("_ReflectionMap");
-    private static readonly int TexturePropertyId = Shader.PropertyToID("_Texture");
 
     internal readonly Material? MaterialObject;
 
@@ -69,9 +68,5 @@ internal class ReplaceableMatcapObject
         MaterialObject.SetTexture(ReflectionMapId, Plugin.BlankCubemap);
 
         MaterialObject.SetTexture(MatCapTexId, _customMatcap);
-        if (MaterialObject.HasProperty(TexturePropertyId))
-        {
-            MaterialObject.SetTexture(TexturePropertyId, _customMatcap);
-        }
     }
 }
