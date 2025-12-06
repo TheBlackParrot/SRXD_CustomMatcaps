@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using HarmonyLib;
@@ -31,7 +32,7 @@ internal class PatchOnAssetsReplaced
     }
 
     private static string _previousCharacterConfigId = string.Empty;
-    private static readonly List<Material> _previousMaterials = [];
+    private static List<Material> _previousMaterials = [];
     private static MenuCharacterAnimationHandler? _menuCharacterAnimationHandler;
     
     [HarmonyPatch(typeof(MenuCharacterAnimationHandler), nameof(MenuCharacterAnimationHandler.UpdateModel))]
@@ -55,7 +56,7 @@ internal class PatchOnAssetsReplaced
         _previousCharacterConfigId = __instance.currentAssistantConfig.id;
         
         _menuCharacterAnimationHandler = __instance;
-        __instance.mainMesh.GetSharedMaterials(_previousMaterials);
+        _previousMaterials = __instance.mainMesh.sharedMaterials.ToList();
         __instance.mainMesh.SetSharedMaterials(Plugin.CharacterMaterials);
     }
 
