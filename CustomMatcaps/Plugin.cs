@@ -82,6 +82,22 @@ public partial class Plugin : BaseUnityPlugin
     private static readonly List<ReplaceableMatcapObject> WheelObjectsMatcapObjects = [];
     private static readonly List<GameObject> WheelBackingObjects = [];
     private static readonly List<ReplaceableMatcapObject> WheelBackingObjectsMatcapObjects = [];
+
+    private static Material? CharacterPinkMaterial => Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x.name == "CharPink");
+    private static Material? CharacterBlueMaterial => Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x.name == "CharBlue");
+    private static Material? CharacterWhiteMaterial => Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x.name == "CharWhite");
+    private static Material? CharacterBlackMaterial => Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x.name == "CharBlack");
+    private static Material? CharacterBlackGreenMaterial => Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x.name == "CharBlackGreen");
+    private static Material? CharacterGreenMaterial => Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x.name == "CharGreen");
+    private static Material? CharacterPurpleMaterial => Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(x => x.name == "CharPurple");
+    private static ReplaceableMatcapObject? _characterPinkMaterialMatcapObject;
+    private static ReplaceableMatcapObject? _characterBlueMaterialMatcapObject;
+    private static ReplaceableMatcapObject? _characterWhiteMaterialMatcapObject;
+    private static ReplaceableMatcapObject? _characterBlackMaterialMatcapObject;
+    private static ReplaceableMatcapObject? _characterBlackGreenMaterialMatcapObject;
+    private static ReplaceableMatcapObject? _characterGreenMaterialMatcapObject;
+    private static ReplaceableMatcapObject? _characterPurpleMaterialMatcapObject;
+    
     private static async Task Initialize()
     {
         await Awaitable.MainThreadAsync();
@@ -103,7 +119,30 @@ public partial class Plugin : BaseUnityPlugin
         }
 
         _ = InitializeTrackStrip();
-        //_ = InitializeWheel();
+        _ = InitializeCharacterMaterials();
+    }
+
+    private static async Task InitializeCharacterMaterials()
+    {
+        await Task.Delay(5000);
+        // i am lazy
+        while (CharacterPinkMaterial == null) await Awaitable.EndOfFrameAsync();
+        while (CharacterBlueMaterial == null) await Awaitable.EndOfFrameAsync();
+        while (CharacterWhiteMaterial == null) await Awaitable.EndOfFrameAsync();
+        while (CharacterBlackMaterial == null) await Awaitable.EndOfFrameAsync();
+        while (CharacterBlackGreenMaterial == null) await Awaitable.EndOfFrameAsync();
+        while (CharacterGreenMaterial == null) await Awaitable.EndOfFrameAsync();
+        while (CharacterPurpleMaterial == null) await Awaitable.EndOfFrameAsync();
+        
+        Shader matcapShader = Resources.FindObjectsOfTypeAll<Shader>().First(x => x.name == "Unlit/Matcap");
+        
+        _characterPinkMaterialMatcapObject = new ReplaceableMatcapObject(CharacterPinkMaterial, matcapShader);
+        _characterBlueMaterialMatcapObject = new ReplaceableMatcapObject(CharacterBlueMaterial, matcapShader);
+        _characterWhiteMaterialMatcapObject = new ReplaceableMatcapObject(CharacterWhiteMaterial, matcapShader);
+        _characterBlackMaterialMatcapObject = new ReplaceableMatcapObject(CharacterBlackMaterial, matcapShader);
+        _characterBlackGreenMaterialMatcapObject = new ReplaceableMatcapObject(CharacterBlackGreenMaterial, matcapShader);
+        _characterGreenMaterialMatcapObject = new ReplaceableMatcapObject(CharacterGreenMaterial, matcapShader);
+        _characterPurpleMaterialMatcapObject = new ReplaceableMatcapObject(CharacterPurpleMaterial, matcapShader);
     }
 
     private static async Task InitializeTrackStrip()

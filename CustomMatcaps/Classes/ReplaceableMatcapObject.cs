@@ -43,6 +43,25 @@ internal class ReplaceableMatcapObject
             // ignored
         }
     }
+    
+    public ReplaceableMatcapObject(Material material, Shader replacementShader)
+    {
+        material.shader = replacementShader;
+        material.SetTexture(MatCapTexId, Texture2D.whiteTexture);
+        
+        _material = material;
+        _defaultMatcap = Texture2D.whiteTexture;
+        /*
+        Plugin.Log.LogInfo($"Material {material.name}:");
+        for (MaterialPropertyType type = MaterialPropertyType.Float; type <= MaterialPropertyType.ComputeBuffer; type++)
+        {
+            foreach (string propertyName in material.GetPropertyNames(type))
+            {
+                Plugin.Log.LogInfo($"{propertyName} ({type})");
+            }
+        }
+        */
+    }
 
     public async Task SetCustomMatcap(string path)
     {
