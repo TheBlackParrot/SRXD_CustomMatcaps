@@ -11,6 +11,8 @@ namespace CustomMatcaps;
 
 public partial class Plugin
 {
+    private static readonly int TintColorId = Shader.PropertyToID("_TintColor");
+    
     internal static ConfigEntry<string> TrackStripMatcap = null!;
     internal static ConfigEntry<string> WheelMatcap = null!;
     internal static ConfigEntry<string> WheelBackingMatcap = null!;
@@ -18,6 +20,8 @@ public partial class Plugin
     internal static ConfigEntry<bool> ApplyMatcapsToCharacters = null!;
     private static readonly List<ConfigEntry<string>> CharacterMaterialFilenames = [];
     private static readonly List<ConfigEntry<string>> VRWandMaterialFilenames = [];
+    
+    internal static ConfigEntry<string> VRWandGlowColor = null!;
 
     private void RegisterConfigEntries()
     {
@@ -35,6 +39,7 @@ public partial class Plugin
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", "Override character matcaps");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(VRWandGlowColor)}", "Wand ring glow color");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
@@ -53,6 +58,9 @@ public partial class Plugin
             VRWandMaterialFilenames.Add(Config.Bind("Matcaps", $"VRWandMaterial{idx + 1}", "default",
                 $"Filename of the matcap texture to use for the VR wand's material slot #{idx + 1}"));
         }
+        
+        VRWandGlowColor = Config.Bind("VRWand", nameof(VRWandGlowColor), "808080", 
+            "Glow color for the ring around the top of the VR wands (hex RGB, no #)");
     }
 
     private static void CreateModPage()
@@ -274,6 +282,35 @@ public partial class Plugin
             
             vrWandMaterialInput.InputField.SetText(VRWandMaterialFilenames[idx].Value);
         }
+        #endregion
+        
+        #region VRWandGlowColor
+        CustomGroup vrWandGlowColorGroup = UIHelper.CreateGroup(modGroup, "VrWandGlowColorGroup");
+        vrWandGlowColorGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(vrWandGlowColorGroup, "VrWandGlowColorLabel", $"{TRANSLATION_PREFIX}{nameof(VRWandGlowColor)}");
+        CustomInputField vrWandGlowColorInput = UIHelper.CreateInputField(vrWandGlowColorGroup, "VrWandGlowColorInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+            
+                VRWandGlowColor.Value = newValue;
+                
+                try
+                {
+                    if (ColorUtility.TryParseHtmlString($"#{VRWandGlowColor.Value}", out Color parsedColor))
+                    {
+                        VRWandMaterialMatcapObjects[1]?.MaterialObject?.SetColor(TintColorId, parsedColor);   
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.LogError(e);
+                }
+            });
+        vrWandGlowColorInput.InputField.SetText(VRWandGlowColor.Value);
         #endregion
     }
 }

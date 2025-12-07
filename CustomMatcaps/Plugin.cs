@@ -231,5 +231,17 @@ public partial class Plugin : BaseUnityPlugin
         {
             Log.LogError(e);
         }
+
+        try
+        {
+            if (ColorUtility.TryParseHtmlString($"#{VRWandGlowColor.Value}", out Color parsedColor))
+            {
+                VRWandMaterialMatcapObjects[1]?.MaterialObject?.SetColor(TintColorId, parsedColor);   
+            }
+        }
+        catch (Exception e)
+        {
+            Log.LogError(e);
+        }
     }
 }
