@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <AssemblyName>CustomMatcaps</AssemblyName>
         <Product>CustomMatcaps</Product>
-        <Version>0.0.0</Version>
+        <Version>0.1.0</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
         <RestoreAdditionalProjectSources>
@@ -64,6 +64,10 @@
         </Reference>
         <Reference Include="UnityEngine.UI">
             <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\UnityEngine.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.XR.Interaction.Toolkit">
+            <HintPath>$(BaseGameDir)\SpinRhythm_Data\Managed\Unity.XR.Interaction.Toolkit.dll</HintPath>
+            <Publicize>true</Publicize>
         </Reference>
     </ItemGroup>
 

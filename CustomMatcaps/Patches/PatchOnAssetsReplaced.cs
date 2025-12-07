@@ -6,7 +6,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 using XDMenuPlay.TrackMenus;
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace CustomMatcaps.Patches;
 
@@ -62,4 +64,30 @@ internal class PatchOnAssetsReplaced
 
     internal static void ResetCharacterMaterials() => 
         _menuCharacterAnimationHandler?.mainMesh.SetSharedMaterials(Plugin.ApplyMatcapsToCharacters.Value ? Plugin.CharacterMaterials! : _previousMaterials);
+
+    [HarmonyPatch(typeof(ActionBasedController), nameof(ActionBasedController.OnEnable))]
+    [HarmonyPostfix]
+    private static void PatchVRWands(ActionBasedController __instance)
+    {
+        _ = InitializeVRWand(__instance);
+    }
+
+    private static async Task InitializeVRWand(ActionBasedController controller)
+    {
+        Transform? modelTransform = null;
+        while (modelTransform == null)
+        {
+            modelTransform = controller.model?.Find("XRControllerWand/VRwand");
+            await Awaitable.EndOfFrameAsync();
+        }
+
+        Renderer renderer = modelTransform.GetComponent<Renderer>();
+        
+        if (Plugin.VRWandMaterialMatcapObjects[0] == null)
+        {
+            await Plugin.InitializeVRWandMaterials(renderer);
+        }
+
+        renderer.SetSharedMaterials(Plugin.VRWandMaterials);
+    }
 }

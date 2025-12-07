@@ -17,6 +17,7 @@ public partial class Plugin
 
     internal static ConfigEntry<bool> ApplyMatcapsToCharacters = null!;
     private static readonly List<ConfigEntry<string>> CharacterMaterialFilenames = [];
+    private static readonly List<ConfigEntry<string>> VRWandMaterialFilenames = [];
 
     private void RegisterConfigEntries()
     {
@@ -37,12 +38,20 @@ public partial class Plugin
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterials", "VR Wand Materials");
         
         for (int idx = 0; idx < 7; idx++)
         {
             TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");
             CharacterMaterialFilenames.Add(Config.Bind("Matcaps", $"CharacterMaterial{idx + 1}", "default",
                 $"Filename of the matcap texture to use for the mascot/character's material slot #{idx + 1}"));
+        }
+        
+        for (int idx = 0; idx < 3; idx++)
+        {
+            TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");
+            VRWandMaterialFilenames.Add(Config.Bind("Matcaps", $"VRWandMaterial{idx + 1}", "default",
+                $"Filename of the matcap texture to use for the VR wand's material slot #{idx + 1}"));
         }
     }
 
@@ -221,6 +230,49 @@ public partial class Plugin
                 });
             
             characterMaterialInput.InputField.SetText(CharacterMaterialFilenames[idx].Value);
+        }
+        #endregion
+        
+        UIHelper.CreateSectionHeader(modGroup, "CharacterMaterialsHeader", $"{TRANSLATION_PREFIX}VRWandMaterials", false);
+        
+        #region VRWandMaterials
+        for (int idx = 0; idx < 3; idx++)
+        {
+            int humanIdx = idx + 1;
+            
+            CustomGroup vrWandMaterialGroup = UIHelper.CreateGroup(modGroup, $"VRWandMaterial{humanIdx}Group");
+            vrWandMaterialGroup.LayoutDirection = Axis.Horizontal;
+            UIHelper.CreateLabel(vrWandMaterialGroup, $"VRWandMaterial{humanIdx}Label", $"{TRANSLATION_PREFIX}VRWandMaterial{humanIdx}");
+
+            int capturedIdx = idx;
+            CustomInputField vrWandMaterialInput = UIHelper.CreateInputField(vrWandMaterialGroup, $"VRWandMaterial{humanIdx}Input",
+                (oldValue, newValue) =>
+                {
+                    if (oldValue == newValue)
+                    {
+                        return;
+                    }
+            
+                    VRWandMaterialFilenames[capturedIdx].Value = newValue;
+
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await Awaitable.MainThreadAsync();
+
+                            await VRWandMaterialMatcapObjects[capturedIdx]?.SetCustomMatcap(newValue.ToLowerInvariant() == "default"
+                                ? "default"
+                                : $"{DataPath}/{VRWandMaterialFilenames[capturedIdx].Value}")!;
+                        }
+                        catch (Exception e)
+                        {
+                            Log.LogError(e);
+                        }
+                    });
+                });
+            
+            vrWandMaterialInput.InputField.SetText(VRWandMaterialFilenames[idx].Value);
         }
         #endregion
     }

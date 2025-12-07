@@ -76,6 +76,11 @@ public partial class Plugin : BaseUnityPlugin
     private static readonly ReplaceableMatcapObject?[] CharacterMaterialMatcapObjects =
         Enumerable.Repeat<ReplaceableMatcapObject?>(null, 7).ToArray();
     
+    internal static List<Material?> VRWandMaterials => VRWandMaterialMatcapObjects.Select(x => x?.MaterialObject).ToList();
+
+    internal static readonly ReplaceableMatcapObject?[] VRWandMaterialMatcapObjects =
+        Enumerable.Repeat<ReplaceableMatcapObject?>(null, 3).ToArray();
+    
     private static async Task Initialize()
     {
         await Awaitable.MainThreadAsync();
@@ -198,5 +203,33 @@ public partial class Plugin : BaseUnityPlugin
         WheelBackingObjects.Clear();
         WheelBackingObjectsMatcapObjects.Clear();
         await InitializeWheel();
+    }
+    
+    internal static async Task InitializeVRWandMaterials(Renderer renderer)
+    {
+        if (VRWandMaterialMatcapObjects[0] != null)
+        {
+            return;
+        }
+        
+        try
+        {
+            Material[] sharedMaterials = renderer.GetSharedMaterialArray();
+            for (int idx = 0; idx < VRWandMaterialMatcapObjects.Length; idx++)
+            {
+                await Awaitable.MainThreadAsync();
+                // the 0th index is on purpose, that's the main body material
+                VRWandMaterialMatcapObjects[idx] = new ReplaceableMatcapObject(sharedMaterials[0]);
+
+                await VRWandMaterialMatcapObjects[idx]!.SetCustomMatcap(
+                    VRWandMaterialFilenames[idx].Value.ToLowerInvariant() == "default"
+                        ? "default"
+                        : $"{DataPath}/{VRWandMaterialFilenames[idx].Value}");
+            }
+        }
+        catch (Exception e)
+        {
+            Log.LogError(e);
+        }
     }
 }
