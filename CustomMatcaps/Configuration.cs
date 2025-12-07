@@ -49,7 +49,7 @@ public partial class Plugin
                 $"Filename of the matcap texture to use for the mascot/character's material slot #{idx + 1}"));
         }
         
-        for (int idx = 0; idx < 4; idx++)
+        for (int idx = 0; idx < 3; idx++)
         {
             TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");
             VRWandMaterialFilenames.Add(Config.Bind("Matcaps", $"VRWandMaterial{idx + 1}", "default",

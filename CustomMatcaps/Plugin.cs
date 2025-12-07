@@ -77,9 +77,8 @@ public partial class Plugin : BaseUnityPlugin
         Enumerable.Repeat<ReplaceableMatcapObject?>(null, 7).ToArray();
     
     internal static List<Material?> VRWandMaterials => VRWandMaterialMatcapObjects.Select(x => x?.MaterialObject).ToList();
-
-    internal static readonly ReplaceableMatcapObject?[] VRWandMaterialMatcapObjects =
-        Enumerable.Repeat<ReplaceableMatcapObject?>(null, 4).ToArray();
+    private static readonly ReplaceableMatcapObject?[] VRWandMaterialMatcapObjects =
+        Enumerable.Repeat<ReplaceableMatcapObject?>(null, 3).ToArray();
     
     private static async Task Initialize()
     {
@@ -204,13 +203,16 @@ public partial class Plugin : BaseUnityPlugin
         WheelBackingObjectsMatcapObjects.Clear();
         await InitializeWheel();
     }
-    
+
+    private static bool _hasInitializedVRWandMaterials;
     internal static async Task InitializeVRWandMaterials(Renderer renderer)
     {
-        if (VRWandMaterialMatcapObjects[0] != null)
+        if (_hasInitializedVRWandMaterials)
         {
             return;
         }
+        
+        _hasInitializedVRWandMaterials = true;
         
         try
         {

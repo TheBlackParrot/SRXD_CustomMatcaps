@@ -83,11 +83,13 @@ internal class PatchOnAssetsReplaced
 
         Renderer renderer = modelTransform.GetComponent<Renderer>();
         
-        if (Plugin.VRWandMaterialMatcapObjects[0] == null)
-        {
-            await Plugin.InitializeVRWandMaterials(renderer);
-        }
+        await Plugin.InitializeVRWandMaterials(renderer);
 
+        while (Plugin.VRWandMaterials.Any(x => x == null))
+        {
+            // wtf?
+            await Awaitable.EndOfFrameAsync();
+        }
         renderer.SetSharedMaterials(Plugin.VRWandMaterials);
     }
 }
