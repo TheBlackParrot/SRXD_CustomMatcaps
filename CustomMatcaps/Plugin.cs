@@ -79,7 +79,7 @@ public partial class Plugin : BaseUnityPlugin
     internal static List<Material?> VRWandMaterials => VRWandMaterialMatcapObjects.Select(x => x?.MaterialObject).ToList();
 
     internal static readonly ReplaceableMatcapObject?[] VRWandMaterialMatcapObjects =
-        Enumerable.Repeat<ReplaceableMatcapObject?>(null, 3).ToArray();
+        Enumerable.Repeat<ReplaceableMatcapObject?>(null, 4).ToArray();
     
     private static async Task Initialize()
     {
@@ -218,6 +218,7 @@ public partial class Plugin : BaseUnityPlugin
             for (int idx = 0; idx < VRWandMaterialMatcapObjects.Length; idx++)
             {
                 await Awaitable.MainThreadAsync();
+                
                 // the 0th index is on purpose, that's the main body material
                 VRWandMaterialMatcapObjects[idx] = new ReplaceableMatcapObject(sharedMaterials[0]);
 
@@ -225,18 +226,6 @@ public partial class Plugin : BaseUnityPlugin
                     VRWandMaterialFilenames[idx].Value.ToLowerInvariant() == "default"
                         ? "default"
                         : $"{DataPath}/{VRWandMaterialFilenames[idx].Value}");
-            }
-        }
-        catch (Exception e)
-        {
-            Log.LogError(e);
-        }
-
-        try
-        {
-            if (ColorUtility.TryParseHtmlString($"#{VRWandGlowColor.Value}", out Color parsedColor))
-            {
-                VRWandMaterialMatcapObjects[1]?.MaterialObject?.SetColor(TintColorId, parsedColor);   
             }
         }
         catch (Exception e)
