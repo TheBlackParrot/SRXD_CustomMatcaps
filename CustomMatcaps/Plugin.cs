@@ -104,13 +104,29 @@ public partial class Plugin : BaseUnityPlugin
         _ = InitializeCharacterMaterials();
     }
 
-    private static async Task InitializeCharacterMaterials()
+    private static async Task InitializeCharacterMaterials(Material? overrideMaterial = null)
     {
         Shader matcapShader = Resources.FindObjectsOfTypeAll<Shader>().First(x => x.name == "Unlit/Matcap");
+        
+#if DEBUG
+        Log.LogInfo("SHADER LIST:");
+        foreach (Shader shader in Resources.FindObjectsOfTypeAll<Shader>())
+        {
+            Log.LogInfo($" -- {shader.name}");
+        }
+#endif
+        
         for (int idx = 0; idx < CharacterMaterialMatcapObjects.Length; idx++)
         {
-            CharacterMaterialMatcapObjects[idx] = new ReplaceableMatcapObject(matcapShader);
-            
+            if (overrideMaterial != null)
+            {
+                CharacterMaterialMatcapObjects[idx] = new ReplaceableMatcapObject(overrideMaterial);
+            }
+            else
+            {
+                CharacterMaterialMatcapObjects[idx] = new ReplaceableMatcapObject(matcapShader);
+            }
+
             // rider sweetie this LITERALLY cannot be null it's ^^^^^^ RIGHT THERE
             await CharacterMaterialMatcapObjects[idx]!.SetCustomMatcap(CharacterMaterialFilenames[idx].Value.ToLowerInvariant() == "default"
                 ? "default"
@@ -213,10 +229,11 @@ public partial class Plugin : BaseUnityPlugin
         }
         
         _hasInitializedVRWandMaterials = true;
-        
+
+        Material[] sharedMaterials = [];
         try
         {
-            Material[] sharedMaterials = renderer.GetSharedMaterialArray();
+            sharedMaterials = renderer.GetSharedMaterialArray();
             for (int idx = 0; idx < VRWandMaterialMatcapObjects.Length; idx++)
             {
                 await Awaitable.MainThreadAsync();
@@ -229,6 +246,24 @@ public partial class Plugin : BaseUnityPlugin
                         ? "default"
                         : $"{DataPath}/{VRWandMaterialFilenames[idx].Value}");
             }
+        }
+        catch (Exception e)
+        {
+            Log.LogError(e);
+        }
+
+        try
+        {
+            // Unlit/Matcap is not VR-compatible, InitializeVRWandMaterials can only be triggered when VR controller objects exist
+            // so now's a good time to re-init character materials with a compatible shader/material
+            
+            await InitializeCharacterMaterials(sharedMaterials[0]);
+            
+            while (CharacterMaterials.Any(x => x == null))
+            {
+                await Awaitable.EndOfFrameAsync();
+            }
+            Patches.PatchOnAssetsReplaced.ResetCharacterMaterials();
         }
         catch (Exception e)
         {
