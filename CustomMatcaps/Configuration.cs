@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using BepInEx.Configuration;
 using CustomMatcaps.Classes;
@@ -11,8 +12,6 @@ namespace CustomMatcaps;
 
 public partial class Plugin
 {
-    private static readonly int TintColorId = Shader.PropertyToID("_TintColor");
-    
     internal static ConfigEntry<string> TrackStripMatcap = null!;
     internal static ConfigEntry<string> WheelMatcap = null!;
     internal static ConfigEntry<string> WheelBackingMatcap = null!;
@@ -20,6 +19,11 @@ public partial class Plugin
     internal static ConfigEntry<bool> ApplyMatcapsToCharacters = null!;
     private static readonly List<ConfigEntry<string>> CharacterMaterialFilenames = [];
     private static readonly List<ConfigEntry<string>> VRWandMaterialFilenames = [];
+
+    internal static ConfigEntry<float> WheelReflectionIntensity = null!;
+    internal static ConfigEntry<string> WheelReflectionTint = null!;
+    internal static ConfigEntry<float> WheelBackingReflectionIntensity = null!;
+    internal static ConfigEntry<string> WheelBackingReflectionTint = null!;
 
     private void RegisterConfigEntries()
     {
@@ -33,10 +37,23 @@ public partial class Plugin
         ApplyMatcapsToCharacters = Config.Bind("Characters", nameof(ApplyMatcapsToCharacters), true,
             "Apply matcap overrides to character models");
         
+        WheelReflectionIntensity = Config.Bind("Wheel", nameof(WheelReflectionIntensity), 0.5f, 
+            "Intensity of default reflection textures on the wheel");
+        WheelReflectionTint = Config.Bind("Wheel", nameof(WheelReflectionTint), "default", 
+            "Tint of the default reflection textures on the wheel (in RRGGBB hex)");
+        WheelBackingReflectionIntensity = Config.Bind("Wheel", nameof(WheelBackingReflectionIntensity), 0.5f, 
+            "Intensity of default reflection textures for meshes behind the note wedges on the wheel");
+        WheelBackingReflectionTint = Config.Bind("Wheel", nameof(WheelBackingReflectionTint), "default", 
+            "Tint of the default reflection textures for meshes behind the note wedges on the wheel (in RRGGBB hex)");
+        
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", "Override character matcaps");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelReflectionIntensity)}", "Wheel reflection intensity");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelReflectionTint)}", "Wheel reflection tint");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionIntensity)}", "Wheel wedge backing reflection intensity");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionTint)}", "Wheel wedge backing reflection tint");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
@@ -143,6 +160,85 @@ public partial class Plugin
         wheelMatcapInput.InputField.SetText(WheelMatcap.Value);
         #endregion
         
+        #region WheelReflectionIntensity
+        CustomGroup wheelReflectionIntensityGroup = UIHelper.CreateGroup(modGroup, "WheelReflectionIntensityGroup");
+        wheelReflectionIntensityGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(wheelReflectionIntensityGroup, "WheelReflectionIntensityLabel", $"{TRANSLATION_PREFIX}{nameof(WheelReflectionIntensity)}");
+        CustomInputField wheelReflectionIntensityInput = UIHelper.CreateInputField(wheelReflectionIntensityGroup, "WheelReflectionIntensityInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+
+                float parsedValue = (WheelReflectionIntensity.DefaultValue as float?)!.Value;
+                if (float.TryParse(newValue, out float tmp))
+                {
+                    parsedValue = tmp;
+                }
+            
+                WheelReflectionIntensity.Value = parsedValue;
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        Color? tintColor = ColorUtility.TryParseHtmlString($"#{WheelReflectionTint.Value}", out Color parsed) ? parsed : null;
+                        
+                        await Awaitable.MainThreadAsync();
+                        
+                        foreach (ReplaceableMatcapObject matcapObject in WheelObjectsMatcapObjects)
+                        {
+                            matcapObject.SetReflectionColor(tintColor, WheelReflectionIntensity.Value);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogError(e);
+                    }
+                });
+            });
+        wheelReflectionIntensityInput.InputField.SetText(WheelReflectionIntensity.Value.ToString(CultureInfo.CurrentCulture));
+        #endregion
+        
+        #region WheelReflectionTint
+        CustomGroup wheelReflectionTintGroup = UIHelper.CreateGroup(modGroup, "WheelReflectionTintGroup");
+        wheelReflectionTintGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(wheelReflectionTintGroup, "WheelReflectionTintLabel", $"{TRANSLATION_PREFIX}{nameof(WheelReflectionTint)}");
+        CustomInputField wheelReflectionTintInput = UIHelper.CreateInputField(wheelReflectionTintGroup, "WheelReflectionTintInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+            
+                WheelReflectionTint.Value = newValue;
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        Color? tintColor = ColorUtility.TryParseHtmlString($"#{WheelReflectionTint.Value}", out Color parsed) ? parsed : null;
+                        
+                        await Awaitable.MainThreadAsync();
+                        
+                        foreach (ReplaceableMatcapObject matcapObject in WheelObjectsMatcapObjects)
+                        {
+                            matcapObject.SetReflectionColor(tintColor, WheelReflectionIntensity.Value);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogError(e);
+                    }
+                });
+            });
+        wheelReflectionTintInput.InputField.SetText(WheelReflectionTint.Value);
+        #endregion
+        
         #region WheelBackingMatcap
         CustomGroup wheelBackingMatcapGroup = UIHelper.CreateGroup(modGroup, "WheelBackingMatcapGroup");
         wheelBackingMatcapGroup.LayoutDirection = Axis.Horizontal;
@@ -179,6 +275,85 @@ public partial class Plugin
                 });
             });
         wheelBackingMatcapInput.InputField.SetText(WheelBackingMatcap.Value);
+        #endregion
+        
+        #region WheelBackingReflectionIntensity
+        CustomGroup wheelBackingReflectionIntensityGroup = UIHelper.CreateGroup(modGroup, "WheelBackingReflectionIntensityGroup");
+        wheelBackingReflectionIntensityGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(wheelBackingReflectionIntensityGroup, "WheelBackingReflectionIntensityLabel", $"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionIntensity)}");
+        CustomInputField wheelBackingReflectionIntensityInput = UIHelper.CreateInputField(wheelBackingReflectionIntensityGroup, "WheelBackingReflectionIntensityInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+
+                float parsedValue = (WheelBackingReflectionIntensity.DefaultValue as float?)!.Value;
+                if (float.TryParse(newValue, out float tmp))
+                {
+                    parsedValue = tmp;
+                }
+            
+                WheelBackingReflectionIntensity.Value = parsedValue;
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        Color? tintColor = ColorUtility.TryParseHtmlString($"#{WheelBackingReflectionTint.Value}", out Color parsed) ? parsed : null;
+                        
+                        await Awaitable.MainThreadAsync();
+                        
+                        foreach (ReplaceableMatcapObject matcapObject in WheelBackingObjectsMatcapObjects)
+                        {
+                            matcapObject.SetReflectionColor(tintColor, WheelBackingReflectionIntensity.Value);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogError(e);
+                    }
+                });
+            });
+        wheelBackingReflectionIntensityInput.InputField.SetText(WheelBackingReflectionIntensity.Value.ToString(CultureInfo.CurrentCulture));
+        #endregion
+        
+        #region WheelBackingReflectionTint
+        CustomGroup wheelBackingReflectionTintGroup = UIHelper.CreateGroup(modGroup, "WheelBackingReflectionTintGroup");
+        wheelBackingReflectionTintGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(wheelBackingReflectionTintGroup, "WheelBackingReflectionTintLabel", $"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionTint)}");
+        CustomInputField wheelBackingReflectionTintInput = UIHelper.CreateInputField(wheelBackingReflectionTintGroup, "WheelBackingReflectionTintInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+            
+                WheelBackingReflectionTint.Value = newValue;
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        Color? tintColor = ColorUtility.TryParseHtmlString($"#{WheelBackingReflectionTint.Value}", out Color parsed) ? parsed : null;
+                        
+                        await Awaitable.MainThreadAsync();
+                        
+                        foreach (ReplaceableMatcapObject matcapObject in WheelBackingObjectsMatcapObjects)
+                        {
+                            matcapObject.SetReflectionColor(tintColor, WheelBackingReflectionIntensity.Value);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogError(e);
+                    }
+                });
+            });
+        wheelBackingReflectionTintInput.InputField.SetText(WheelBackingReflectionTint.Value);
         #endregion
         
         UIHelper.CreateSectionHeader(modGroup, "CharacterMaterialsHeader", $"{TRANSLATION_PREFIX}CharacterMaterials", false);

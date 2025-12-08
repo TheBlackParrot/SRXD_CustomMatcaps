@@ -63,7 +63,7 @@ public partial class Plugin : BaseUnityPlugin
         });
     }
 
-    internal static Cubemap? BlankCubemap;
+    //private static Cubemap? _blankCubemap;
     
     private static GameObject? _trackStripSolid;
     private static ReplaceableMatcapObject? _trackStripSolidMatcapObject;
@@ -84,21 +84,21 @@ public partial class Plugin : BaseUnityPlugin
     {
         await Awaitable.MainThreadAsync();
         
-        if (BlankCubemap == null)
+        /*if (_blankCubemap == null)
         {
             Color[] pixels = Enumerable.Repeat(Color.black, 64).ToArray();
             
-            BlankCubemap = new Cubemap(8, TextureFormat.RGB24, 0)
+            _blankCubemap = new Cubemap(8, TextureFormat.RGB24, 0)
             {
                 wrapMode = TextureWrapMode.Repeat
             };
 
             for (CubemapFace face = CubemapFace.PositiveX; face <= CubemapFace.NegativeZ; face++)
             {
-                BlankCubemap.SetPixels(pixels, face);   
+                _blankCubemap.SetPixels(pixels, face);   
             }
-            BlankCubemap.Apply();
-        }
+            _blankCubemap.Apply();
+        }*/
 
         _ = InitializeTrackStrip();
         _ = InitializeCharacterMaterials();
@@ -190,6 +190,7 @@ public partial class Plugin : BaseUnityPlugin
             }
         }
         
+        Color? wheelReflectionTintColor = ColorUtility.TryParseHtmlString($"#{WheelReflectionTint.Value}", out Color parsedA) ? parsedA : null;
         foreach (GameObject wheelObject in WheelObjects)
         {
             ReplaceableMatcapObject matcapObject = new(wheelObject);
@@ -198,8 +199,11 @@ public partial class Plugin : BaseUnityPlugin
             await matcapObject.SetCustomMatcap(WheelMatcap.Value.ToLowerInvariant() == "default"
                 ? "default"
                 : $"{DataPath}/{WheelMatcap.Value}");
+
+            matcapObject.SetReflectionColor(wheelReflectionTintColor, WheelReflectionIntensity.Value);
         }
         
+        Color? wheelBackingReflectionTintColor = ColorUtility.TryParseHtmlString($"#{WheelBackingReflectionTint.Value}", out Color parsedB) ? parsedB : null;
         foreach (GameObject wheelBackingObject in WheelBackingObjects)
         {
             ReplaceableMatcapObject matcapObject = new(wheelBackingObject);
@@ -208,6 +212,8 @@ public partial class Plugin : BaseUnityPlugin
             await matcapObject.SetCustomMatcap(WheelBackingMatcap.Value.ToLowerInvariant() == "default"
                 ? "default"
                 : $"{DataPath}/{WheelBackingMatcap.Value}");
+            
+            matcapObject.SetReflectionColor(wheelBackingReflectionTintColor, WheelBackingReflectionIntensity.Value);
         }
     }
 
@@ -245,6 +251,8 @@ public partial class Plugin : BaseUnityPlugin
                     VRWandMaterialFilenames[idx].Value.ToLowerInvariant() == "default"
                         ? "default"
                         : $"{DataPath}/{VRWandMaterialFilenames[idx].Value}");
+                
+                VRWandMaterialMatcapObjects[idx]!.SetReflectionColor(Color.white, 0);
             }
         }
         catch (Exception e)
