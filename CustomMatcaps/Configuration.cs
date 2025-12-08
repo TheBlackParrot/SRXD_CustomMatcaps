@@ -59,14 +59,14 @@ public partial class Plugin
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterials", "VR Wand Materials");
         
-        for (int idx = 0; idx < 7; idx++)
+        for (int idx = 0; idx < CharacterMaterialMatcapObjects.Length; idx++)
         {
             TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");
             CharacterMaterialFilenames.Add(Config.Bind("Matcaps", $"CharacterMaterial{idx + 1}", "default",
                 $"Filename of the matcap texture to use for the mascot/character's material slot #{idx + 1}"));
         }
         
-        for (int idx = 0; idx < 3; idx++)
+        for (int idx = 0; idx < VRWandMaterialMatcapObjects.Length; idx++)
         {
             TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");
             VRWandMaterialFilenames.Add(Config.Bind("Matcaps", $"VRWandMaterial{idx + 1}", "default",
@@ -370,7 +370,7 @@ public partial class Plugin
         #endregion
         
         #region CharacterMaterials
-        for (int idx = 0; idx < 7; idx++)
+        for (int idx = 0; idx < CharacterMaterialMatcapObjects.Length; idx++)
         {
             int humanIdx = idx + 1;
             
@@ -413,7 +413,7 @@ public partial class Plugin
         UIHelper.CreateSectionHeader(modGroup, "CharacterMaterialsHeader", $"{TRANSLATION_PREFIX}VRWandMaterials", false);
         
         #region VRWandMaterials
-        for (int idx = 0; idx < 3; idx++)
+        for (int idx = 0; idx < VRWandMaterialMatcapObjects.Length; idx++)
         {
             int humanIdx = idx + 1;
             
