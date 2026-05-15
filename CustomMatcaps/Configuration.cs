@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using BepInEx.Configuration;
 using CustomMatcaps.Classes;
+using CustomMatcaps.Patches;
 using SpinCore.Translation;
 using SpinCore.UI;
 using UnityEngine;
@@ -24,6 +25,8 @@ public partial class Plugin
     internal static ConfigEntry<string> WheelReflectionTint = null!;
     internal static ConfigEntry<float> WheelBackingReflectionIntensity = null!;
     internal static ConfigEntry<string> WheelBackingReflectionTint = null!;
+
+    internal static ConfigEntry<string> TrackSplineTexture = null!;
 
     private void RegisterConfigEntries()
     {
@@ -46,6 +49,9 @@ public partial class Plugin
         WheelBackingReflectionTint = Config.Bind("Wheel", nameof(WheelBackingReflectionTint), "default", 
             "Tint of the default reflection textures for meshes behind the note wedges on the wheel (in RRGGBB hex)");
         
+        TrackSplineTexture = Config.Bind("Track", nameof(TrackSplineTexture), "default", 
+            "Filename of the texture to apply to the track");
+        
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap");
@@ -54,6 +60,7 @@ public partial class Plugin
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelReflectionTint)}", "Wheel reflection tint");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionIntensity)}", "Wheel wedge backing reflection intensity");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionTint)}", "Wheel wedge backing reflection tint");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackSplineTexture)}", "Track spline texture");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
@@ -356,6 +363,45 @@ public partial class Plugin
         wheelBackingReflectionTintInput.InputField.SetText(WheelBackingReflectionTint.Value);
         #endregion
         
+        #region TrackSplineTexture
+        CustomGroup trackSplineTextureGroup = UIHelper.CreateGroup(modGroup, "TrackSplineTextureGroup");
+        trackSplineTextureGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(trackSplineTextureGroup, "TrackSplineTextureLabel", $"{TRANSLATION_PREFIX}{nameof(TrackSplineTexture)}");
+        CustomInputField trackSplineTextureInput = UIHelper.CreateInputField(trackSplineTextureGroup, "TrackSplineTextureInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+            
+                TrackSplineTexture.Value = newValue;
+
+                if (newValue == "default")
+                {
+                    PatchOnAssetsReplaced.TrackSplineTexture = null;
+                    return;
+                }
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Awaitable.MainThreadAsync();
+                        
+                        PatchOnAssetsReplaced.TrackSplineTexture =
+                            MatcapTextureCache.Get($"{DataPath}/{TrackSplineTexture.Value}") ??
+                            await MatcapTextureCache.Add($"{DataPath}/{TrackSplineTexture.Value}");
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogError(e);
+                    }
+                });
+            });
+        trackSplineTextureInput.InputField.SetText(TrackSplineTexture.Value);
+        #endregion
+        
         UIHelper.CreateSectionHeader(modGroup, "CharacterMaterialsHeader", $"{TRANSLATION_PREFIX}CharacterMaterials", false);
         
         #region ApplyMatcapsToCharacters
@@ -410,7 +456,7 @@ public partial class Plugin
         }
         #endregion
         
-        UIHelper.CreateSectionHeader(modGroup, "CharacterMaterialsHeader", $"{TRANSLATION_PREFIX}VRWandMaterials", false);
+        UIHelper.CreateSectionHeader(modGroup, "VRWandMaterialsHeader", $"{TRANSLATION_PREFIX}VRWandMaterials", false);
         
         #region VRWandMaterials
         for (int idx = 0; idx < VRWandMaterialMatcapObjects.Length; idx++)

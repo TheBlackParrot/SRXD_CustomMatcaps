@@ -22,7 +22,7 @@ public partial class Plugin : BaseUnityPlugin
     internal static ManualLogSource Log = null!;
     private static readonly Harmony HarmonyInstance = new(MyPluginInfo.PLUGIN_GUID);
 
-    private static string DataPath => Path.Combine(Paths.ConfigPath, nameof(CustomMatcaps));
+    internal static string DataPath => Path.Combine(Paths.ConfigPath, nameof(CustomMatcaps));
 
     private void Awake()
     {

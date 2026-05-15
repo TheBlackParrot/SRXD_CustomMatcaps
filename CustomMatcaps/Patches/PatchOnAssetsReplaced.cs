@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using CustomMatcaps.Classes;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -16,6 +17,8 @@ namespace CustomMatcaps.Patches;
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 internal class PatchOnAssetsReplaced
 {
+    internal static Texture2D? TrackSplineTexture;
+    
     [HarmonyPatch(typeof(WheelVisuals), nameof(WheelVisuals.OnAssetsReplaced))]
     [HarmonyPostfix]
     private static void PatchWheelAssets()
@@ -25,6 +28,10 @@ internal class PatchOnAssetsReplaced
             try
             {
                 await Plugin.ReinitializeWheel();
+                TrackSplineTexture = (Plugin.TrackSplineTexture.Value == "default"
+                    ? null
+                    : (MatcapTextureCache.Get($"{Plugin.DataPath}/{Plugin.TrackSplineTexture.Value}") ??
+                      await MatcapTextureCache.Add($"{Plugin.DataPath}/{Plugin.TrackSplineTexture.Value}")));
             }
             catch (Exception e)
             {
@@ -91,5 +98,19 @@ internal class PatchOnAssetsReplaced
             await Awaitable.EndOfFrameAsync();
         }
         renderer.SetSharedMaterials(Plugin.VRWandMaterials);
+    }
+
+    private static readonly int PatternMap = Shader.PropertyToID("_PatternMap");
+    [HarmonyPatch(typeof(SplineRenderer), nameof(SplineRenderer.UpdateSpline))]
+    [HarmonyPostfix]
+    private static void PatchTrackSplineRenderer(SplineRenderer __instance)
+    {
+        if (TrackSplineTexture == null)
+        {
+            return;
+        }
+        
+        __instance.splineMaterial?.SetTexture(PatternMap, TrackSplineTexture);
+        __instance.splineMaterialOverride?.SetTexture(PatternMap, TrackSplineTexture);
     }
 }
