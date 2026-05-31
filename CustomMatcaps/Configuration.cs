@@ -25,6 +25,13 @@ public partial class Plugin
     internal static ConfigEntry<string> WheelReflectionTint = null!;
     internal static ConfigEntry<float> WheelBackingReflectionIntensity = null!;
     internal static ConfigEntry<string> WheelBackingReflectionTint = null!;
+    
+    internal static ConfigEntry<string> MenuLogoXColor = null!;
+    internal static ConfigEntry<string> MenuLogoDColor = null!;
+    internal static ConfigEntry<string> MenuLogoBackingColor = null!;
+    internal static ConfigEntry<string> MenuLogoBackingReflectionColor = null!;
+    internal static ConfigEntry<string> MenuLogoOutlineColor = null!;
+    internal static ConfigEntry<string> MenuLogoOutlineReflectionColor = null!;
 
     internal static ConfigEntry<string> TrackSplineTexture = null!;
 
@@ -52,6 +59,19 @@ public partial class Plugin
         TrackSplineTexture = Config.Bind("Track", nameof(TrackSplineTexture), "default", 
             "Filename of the texture to apply to the track");
         
+        MenuLogoXColor = Config.Bind("Logo", nameof(MenuLogoXColor), "default", 
+            "Color of the X character in the main menu logo (in RRGGBB hex)");
+        MenuLogoDColor = Config.Bind("Logo", nameof(MenuLogoDColor), "default", 
+            "Color of the D character in the main menu logo (in RRGGBB hex)");
+        MenuLogoBackingColor = Config.Bind("Logo", nameof(MenuLogoBackingColor), "default", 
+            "Color of the background/backing part of the main menu logo (in RRGGBB hex)");
+        MenuLogoBackingReflectionColor = Config.Bind("Logo", nameof(MenuLogoBackingReflectionColor), "default", 
+            "Color of the reflections in the background/backing part of the main menu logo (in RRGGBB hex)");
+        MenuLogoOutlineColor = Config.Bind("Logo", nameof(MenuLogoOutlineColor), "default", 
+            "Color of the outlines in the main menu logo (in RRGGBB hex)");
+        MenuLogoOutlineReflectionColor = Config.Bind("Logo", nameof(MenuLogoOutlineReflectionColor), "default", 
+            "Color of the reflections in the outlines of the main menu logo (in RRGGBB hex)");
+        
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap");
@@ -61,10 +81,17 @@ public partial class Plugin
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionIntensity)}", "Wheel wedge backing reflection intensity");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionTint)}", "Wheel wedge backing reflection tint");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackSplineTexture)}", "Track spline texture");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoXColor)}", "X character color");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoDColor)}", "D character color");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingColor)}", "Background color");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingReflectionColor)}", "Background reflection color");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineColor)}", "Outline color");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineReflectionColor)}", "Outline reflection color");
         
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
         TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterials", "VR Wand Materials");
+        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}MenuLogoMaterials", "Menu Logo Materials");
         
         for (int idx = 0; idx < CharacterMaterialMatcapObjects.Length; idx++)
         {
@@ -401,6 +428,118 @@ public partial class Plugin
             });
         trackSplineTextureInput.InputField.SetText(TrackSplineTexture.Value);
         #endregion
+
+        UIHelper.CreateSectionHeader(modGroup, "MenuLogoMaterialsHeader", $"{TRANSLATION_PREFIX}MenuLogoMaterials", false);
+        
+        #region MenuLogoXColor
+        CustomGroup menuLogoXColorGroup = UIHelper.CreateGroup(modGroup, "MenuLogoXColorGroup");
+        menuLogoXColorGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(menuLogoXColorGroup, "MenuLogoXColorLabel", $"{TRANSLATION_PREFIX}{nameof(MenuLogoXColor)}");
+        CustomInputField menuLogoXColorInput = UIHelper.CreateInputField(menuLogoXColorGroup, "MenuLogoXColorInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+                MenuLogoXColor.Value = newValue;
+                SetMenuLogoColors();
+            });
+        menuLogoXColorInput.InputField.SetText(MenuLogoXColor.Value);
+        #endregion
+        
+        #region MenuLogoDColor
+        CustomGroup menuLogoDColorGroup = UIHelper.CreateGroup(modGroup, "MenuLogoDColorGroup");
+        menuLogoDColorGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(menuLogoDColorGroup, "MenuLogoDColorLabel", $"{TRANSLATION_PREFIX}{nameof(MenuLogoDColor)}");
+        CustomInputField menuLogoDColorInput = UIHelper.CreateInputField(menuLogoDColorGroup, "MenuLogoDColorInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+                MenuLogoDColor.Value = newValue;
+                SetMenuLogoColors();
+            });
+        menuLogoDColorInput.InputField.SetText(MenuLogoDColor.Value);
+        #endregion
+        
+        #region MenuLogoBackingColor
+        CustomGroup menuLogoBackingColorGroup = UIHelper.CreateGroup(modGroup, "MenuLogoBackingColorGroup");
+        menuLogoBackingColorGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(menuLogoBackingColorGroup, "MenuLogoBackingColorLabel", $"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingColor)}");
+        CustomInputField menuLogoBackingColorInput = UIHelper.CreateInputField(menuLogoBackingColorGroup, "MenuLogoBackingColorInput",
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+                MenuLogoBackingColor.Value = newValue;
+                SetMenuLogoColors();
+            });
+        menuLogoBackingColorInput.InputField.SetText(MenuLogoBackingColor.Value);
+        #endregion
+        
+        #region MenuLogoBackingReflectionColor
+        CustomGroup menuLogoBackingReflectionColorGroup = UIHelper.CreateGroup(modGroup, "MenuLogoBackingReflectionColorGroup");
+        menuLogoBackingReflectionColorGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(menuLogoBackingReflectionColorGroup, "MenuLogoBackingReflectionColorLabel",
+            $"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingReflectionColor)}");
+        CustomInputField menuLogoBackingReflectionColorInput = UIHelper.CreateInputField(menuLogoBackingReflectionColorGroup, 
+            "MenuLogoBackingReflectionColorInput", (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+                MenuLogoBackingReflectionColor.Value = newValue;
+                SetMenuLogoColors();
+            });
+        menuLogoBackingReflectionColorInput.InputField.SetText(MenuLogoBackingReflectionColor.Value);
+        #endregion
+        
+        #region MenuLogoOutlineColor
+        CustomGroup menuLogoOutlineColorGroup = UIHelper.CreateGroup(modGroup, "MenuLogoOutlineColorGroup");
+        menuLogoOutlineColorGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(menuLogoOutlineColorGroup, "MenuLogoOutlineColorLabel", $"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineColor)}");
+        CustomInputField menuLogoOutlineColorInput = UIHelper.CreateInputField(menuLogoOutlineColorGroup, "MenuLogoOutlineColorInput", 
+            (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+                MenuLogoOutlineColor.Value = newValue;
+                SetMenuLogoColors();
+            });
+        menuLogoOutlineColorInput.InputField.SetText(MenuLogoOutlineColor.Value);
+        #endregion
+        
+        #region MenuLogoOutlineReflectionColor
+        CustomGroup menuLogoOutlineReflectionColorGroup = UIHelper.CreateGroup(modGroup, "MenuLogoOutlineReflectionColorGroup");
+        menuLogoOutlineReflectionColorGroup.LayoutDirection = Axis.Horizontal;
+        UIHelper.CreateLabel(menuLogoOutlineReflectionColorGroup, "MenuLogoOutlineReflectionColorLabel",
+            $"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineReflectionColor)}");
+        CustomInputField menuLogoOutlineReflectionColorInput = UIHelper.CreateInputField(menuLogoOutlineReflectionColorGroup, 
+            "MenuLogoOutlineReflectionColorInput", (oldValue, newValue) =>
+            {
+                if (oldValue == newValue)
+                {
+                    return;
+                }
+                
+                MenuLogoOutlineReflectionColor.Value = newValue;
+                SetMenuLogoColors();
+            });
+        menuLogoOutlineReflectionColorInput.InputField.SetText(MenuLogoOutlineReflectionColor.Value);
+        #endregion
         
         UIHelper.CreateSectionHeader(modGroup, "CharacterMaterialsHeader", $"{TRANSLATION_PREFIX}CharacterMaterials", false);
         
@@ -411,7 +550,7 @@ public partial class Plugin
             $"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", ApplyMatcapsToCharacters.Value, value =>
             {
                 ApplyMatcapsToCharacters.Value = value;
-                Patches.PatchOnAssetsReplaced.ResetCharacterMaterials();
+                PatchOnAssetsReplaced.ResetCharacterMaterials();
             });
         #endregion
         

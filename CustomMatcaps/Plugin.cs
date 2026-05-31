@@ -23,6 +23,9 @@ public partial class Plugin : BaseUnityPlugin
     private static readonly Harmony HarmonyInstance = new(MyPluginInfo.PLUGIN_GUID);
 
     internal static string DataPath => Path.Combine(Paths.ConfigPath, nameof(CustomMatcaps));
+    
+    private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+    private static readonly int LightColor = Shader.PropertyToID("_LightColor");
 
     private void Awake()
     {
@@ -61,6 +64,14 @@ public partial class Plugin : BaseUnityPlugin
                 Log.LogError(e);
             }
         });
+        
+        MainCamera.OnCurrentCameraChanged += InitializeAfterCamera;
+    }
+
+    private static void InitializeAfterCamera(Camera obj)
+    {
+        MainCamera.OnCurrentCameraChanged -= InitializeAfterCamera;
+        SetMenuLogoColors();
     }
 
     //private static Cubemap? _blankCubemap;
@@ -240,6 +251,7 @@ public partial class Plugin : BaseUnityPlugin
     }
 
     private static bool _hasInitializedVRWandMaterials;
+
     internal static async Task InitializeVRWandMaterials(Renderer renderer)
     {
         if (_hasInitializedVRWandMaterials)
@@ -289,6 +301,67 @@ public partial class Plugin : BaseUnityPlugin
         catch (Exception e)
         {
             Log.LogError(e);
+        }
+    }
+
+    private static readonly Color _defaultLogoXCharacterColor = new(0.114f, 0.46f, 0.726f);
+    private static readonly Color _defaultLogoDCharacterColor = new(0.679f, 0.158f, 0.313f);
+    private static readonly Color _defaultLogoBackingColor = new(0.082f, 0.088f, 0.123f); // _BaseColor
+    private static readonly Color _defaultLogoBackingReflectionColor = new(0.454f, 0.374f, 1f); // _LightColor
+    private static readonly Color _defaultLogoOutlineColor = Color.white;
+    private static readonly Color _defaultLogoOutlineReflectionColor = Color.white;
+    private static Material? _replacementLogoGlowMaterial;
+    private static void SetMenuLogoColors()
+    {
+        Material xLogoMaterial = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "BlueLOGOMenu");
+        Material dLogoMaterial = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "RedLOGOMenu");
+        Material backgroundLogoMaterial = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "BlackLOGOMenu");
+        
+        Transform logoMesh = GameObject.Find("XD_title_mesh_2023/CenterPoint").transform;
+        Renderer backingMeshRenderer = GameObject.Find("XD_title_mesh_2023/CenterPoint/XD_logo_Back_2021").GetComponent<Renderer>();
+        
+        if (_replacementLogoGlowMaterial == null)
+        {
+            _replacementLogoGlowMaterial = new Material(backgroundLogoMaterial);
+
+            // yes this is backwards lol
+            Transform sparkleLight = logoMesh.Find("AnimatorLayerDark (1)");
+            
+            logoMesh.Find("D_outline").GetComponent<Renderer>().sharedMaterial = _replacementLogoGlowMaterial;
+            logoMesh.Find("Rhythm").GetComponent<Renderer>().sharedMaterial = _replacementLogoGlowMaterial;
+            logoMesh.Find("Spin").GetComponent<Renderer>().sharedMaterial = _replacementLogoGlowMaterial;
+            logoMesh.Find("X_outline").GetComponent<Renderer>().sharedMaterial = _replacementLogoGlowMaterial;
+            logoMesh.Find("XD_logo_Back_White").GetComponent<Renderer>().sharedMaterial = _replacementLogoGlowMaterial;
+            
+            for (int idx = 0; idx < sparkleLight.childCount; idx++)
+            {
+                sparkleLight.GetChild(idx).GetComponent<Renderer>().sharedMaterial = _replacementLogoGlowMaterial;
+            }
+        }
+        
+        Color? xColor = ColorUtility.TryParseHtmlString($"#{MenuLogoXColor.Value}", out Color xParsed) ? xParsed : null;
+        Color? dColor = ColorUtility.TryParseHtmlString($"#{MenuLogoDColor.Value}", out Color dParsed) ? dParsed : null;
+        Color? bgColor = ColorUtility.TryParseHtmlString($"#{MenuLogoBackingColor.Value}", out Color bgParsed) ? bgParsed : null;
+        Color? bgReflectColor = ColorUtility.TryParseHtmlString($"#{MenuLogoBackingReflectionColor.Value}", out Color bgReflectParsed) ? bgReflectParsed : null;
+        Color? outlineColor = ColorUtility.TryParseHtmlString($"#{MenuLogoOutlineColor.Value}", out Color oParsed) ? oParsed : null;
+        Color? outlineReflectColor = ColorUtility.TryParseHtmlString($"#{MenuLogoOutlineReflectionColor.Value}", out Color oReflectParsed) ? oReflectParsed : null;
+        
+        xLogoMaterial.SetColor(BaseColor, xColor ?? _defaultLogoXCharacterColor);
+        dLogoMaterial.SetColor(BaseColor, dColor ?? _defaultLogoDCharacterColor);
+        backgroundLogoMaterial.SetColor(BaseColor, bgColor ?? _defaultLogoBackingColor);
+        backgroundLogoMaterial.SetColor(LightColor, bgReflectColor ?? _defaultLogoBackingReflectionColor);
+        _replacementLogoGlowMaterial.SetColor(BaseColor, outlineColor ?? _defaultLogoOutlineColor);
+        _replacementLogoGlowMaterial.SetColor(LightColor, outlineReflectColor ?? _defaultLogoOutlineReflectionColor);
+        
+        // for some reason updating the black material doesn't apply to these??? i'm blaming unity lol
+        backingMeshRenderer.material.SetColor(BaseColor, bgColor ?? _defaultLogoBackingColor);
+        backingMeshRenderer.material.SetColor(LightColor, bgReflectColor ?? _defaultLogoBackingReflectionColor);
+        Transform sparkleDark = logoMesh.Find("AnimatorLayerLight (1)");
+        for (int idx = 0; idx < sparkleDark.childCount; idx++)
+        {
+            Renderer sparkleRenderer = sparkleDark.GetChild(idx).GetComponent<Renderer>();
+            sparkleRenderer.material.SetColor(BaseColor, bgColor ?? _defaultLogoBackingColor);
+            sparkleRenderer.material.SetColor(LightColor, bgReflectColor ?? _defaultLogoBackingReflectionColor);
         }
     }
 }
