@@ -148,10 +148,10 @@ public partial class Plugin : BaseUnityPlugin
             : $"{DataPath}/{TrackStripMatcap.Value}");
     }
 
+    private static WheelVisuals[] wheelVisuals =>
+        FindObjectsByType<WheelVisuals>(FindObjectsInactive.Include, FindObjectsSortMode.None);
     private static async Task InitializeWheel()
     {
-        WheelVisuals[] visuals = [];
-
         if (WheelObjects.Count > 0)
         {
             return;
@@ -159,13 +159,14 @@ public partial class Plugin : BaseUnityPlugin
         
         await Awaitable.MainThreadAsync();
         
-        while (visuals.Length == 0)
+        while (wheelVisuals.Length == 0)
         {
-            visuals = FindObjectsByType<WheelVisuals>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             await Awaitable.EndOfFrameAsync();
         }
 
-        foreach (WheelVisuals visual in visuals)
+        List<GameObject> foundWheelObjects = [];
+        List<GameObject> foundWheelBackingObjects = [];
+        foreach (WheelVisuals visual in wheelVisuals)
         {
             for (int idx = 0; idx < visual.transform.childCount; idx++)
             {
@@ -175,7 +176,7 @@ public partial class Plugin : BaseUnityPlugin
                     continue;
                 }
                 
-                WheelObjects.Add(visual.transform.GetChild(idx).gameObject);
+                foundWheelObjects.Add(visual.transform.GetChild(idx).gameObject);
             }
 
             for (int idx = 0; idx < visual.wheelSpinning.childCount; idx++)
@@ -186,9 +187,11 @@ public partial class Plugin : BaseUnityPlugin
                     continue;
                 }
                 
-                WheelBackingObjects.Add(childObject.transform.Find("WedgeBacking").gameObject);
+                foundWheelBackingObjects.Add(childObject.transform.Find("WedgeBacking").gameObject);
             }
         }
+        WheelObjects.AddRange(foundWheelObjects);
+        WheelBackingObjects.AddRange(foundWheelBackingObjects);
         
         Color? wheelReflectionTintColor = ColorUtility.TryParseHtmlString($"#{WheelReflectionTint.Value}", out Color parsedA) ? parsedA : null;
         foreach (GameObject wheelObject in WheelObjects)
@@ -217,13 +220,23 @@ public partial class Plugin : BaseUnityPlugin
         }
     }
 
+    private static bool _initializingWheel; 
     internal static async Task ReinitializeWheel()
     {
         WheelObjects.Clear();
         WheelObjectsMatcapObjects.Clear();
         WheelBackingObjects.Clear();
         WheelBackingObjectsMatcapObjects.Clear();
+        
+        while (_initializingWheel)
+        {
+            await Awaitable.EndOfFrameAsync();
+        }
+        await Awaitable.MainThreadAsync();
+
+        _initializingWheel = true;
         await InitializeWheel();
+        _initializingWheel = false;
     }
 
     private static bool _hasInitializedVRWandMaterials;
