@@ -18,7 +18,6 @@ namespace CustomMatcaps;
 [BepInDependency("srxd.raoul1808.spincore", "1.1.2")]
 public partial class Plugin : BaseUnityPlugin
 {
-    private const string TRANSLATION_PREFIX = $"{nameof(CustomMatcaps)}_";
     internal static ManualLogSource Log = null!;
     private static readonly Harmony HarmonyInstance = new(MyPluginInfo.PLUGIN_GUID);
 
@@ -26,6 +25,32 @@ public partial class Plugin : BaseUnityPlugin
     
     private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
     private static readonly int LightColor = Shader.PropertyToID("_LightColor");
+    
+    private const string TRANSLATION_PREFIX = $"{nameof(CustomMatcaps)}_";
+    private static readonly Dictionary<string, string> TranslationReferences = new()
+    {
+        {$"{TRANSLATION_PREFIX}ModName", nameof(CustomMatcaps)},
+        {$"{TRANSLATION_PREFIX}GitHubButtonText", $"{nameof(CustomMatcaps)} Releases (GitHub)"},
+        {$"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements"},
+        {$"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials"},
+        {$"{TRANSLATION_PREFIX}VRWandMaterials", "VR Wand Materials"},
+        {$"{TRANSLATION_PREFIX}MenuLogoMaterials", "Menu Logo Materials"},
+        {$"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap"},
+        {$"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap"},
+        {$"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap"},
+        {$"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", "Override character matcaps"},
+        {$"{TRANSLATION_PREFIX}{nameof(WheelReflectionIntensity)}", "Wheel reflection intensity"},
+        {$"{TRANSLATION_PREFIX}{nameof(WheelReflectionTint)}", "Wheel reflection tint"},
+        {$"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionIntensity)}", "Wheel wedge backing reflection intensity"},
+        {$"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionTint)}", "Wheel wedge backing reflection tint"},
+        {$"{TRANSLATION_PREFIX}{nameof(TrackSplineTexture)}", "Track spline texture"},
+        {$"{TRANSLATION_PREFIX}{nameof(MenuLogoXColor)}", "X character color"},
+        {$"{TRANSLATION_PREFIX}{nameof(MenuLogoDColor)}", "D character color"},
+        {$"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingColor)}", "Background color"},
+        {$"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingReflectionColor)}", "Background reflection color"},
+        {$"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineColor)}", "Outline color"},
+        {$"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineReflectionColor)}", "Outline reflection color"}
+    };
 
     private void Awake()
     {
@@ -36,7 +61,10 @@ public partial class Plugin : BaseUnityPlugin
             Directory.CreateDirectory(DataPath);
         }
         
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}ModName", nameof(CustomMatcaps));
+        foreach (KeyValuePair<string, string> entry in TranslationReferences)
+        {
+            TranslationHelper.AddTranslation(entry.Key, entry.Value);   
+        }
         
         RegisterConfigEntries();
         CreateModPage();
@@ -94,22 +122,6 @@ public partial class Plugin : BaseUnityPlugin
     private static async Task Initialize()
     {
         await Awaitable.MainThreadAsync();
-        
-        /*if (_blankCubemap == null)
-        {
-            Color[] pixels = Enumerable.Repeat(Color.black, 64).ToArray();
-            
-            _blankCubemap = new Cubemap(8, TextureFormat.RGB24, 0)
-            {
-                wrapMode = TextureWrapMode.Repeat
-            };
-
-            for (CubemapFace face = CubemapFace.PositiveX; face <= CubemapFace.NegativeZ; face++)
-            {
-                _blankCubemap.SetPixels(pixels, face);   
-            }
-            _blankCubemap.Apply();
-        }*/
 
         _ = InitializeTrackStrip();
         _ = InitializeCharacterMaterials();

@@ -72,34 +72,12 @@ public partial class Plugin
         MenuLogoOutlineReflectionColor = Config.Bind("Logo", nameof(MenuLogoOutlineReflectionColor), "default", 
             "Color of the reflections in the outlines of the main menu logo (in RRGGBB hex)");
         
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackStripMatcap)}", "Track edge matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelMatcap)}", "Wheel matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingMatcap)}", "Wheel wedge backing matcap");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(ApplyMatcapsToCharacters)}", "Override character matcaps");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelReflectionIntensity)}", "Wheel reflection intensity");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelReflectionTint)}", "Wheel reflection tint");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionIntensity)}", "Wheel wedge backing reflection intensity");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(WheelBackingReflectionTint)}", "Wheel wedge backing reflection tint");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(TrackSplineTexture)}", "Track spline texture");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoXColor)}", "X character color");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoDColor)}", "D character color");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingColor)}", "Background color");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoBackingReflectionColor)}", "Background reflection color");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineColor)}", "Outline color");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}{nameof(MenuLogoOutlineReflectionColor)}", "Outline reflection color");
-        
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}GameplayElements", "Gameplay Elements");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterials", "Character Materials");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterials", "VR Wand Materials");
-        TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}MenuLogoMaterials", "Menu Logo Materials");
-        
         for (int idx = 0; idx < CharacterMaterialMatcapObjects.Length; idx++)
         {
             TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}CharacterMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");
             CharacterMaterialFilenames.Add(Config.Bind("Matcaps", $"CharacterMaterial{idx + 1}", "default",
                 $"Filename of the matcap texture to use for the mascot/character's material slot #{idx + 1}"));
         }
-        
         for (int idx = 0; idx < VRWandMaterialMatcapObjects.Length; idx++)
         {
             TranslationHelper.AddTranslation($"{TRANSLATION_PREFIX}VRWandMaterial{idx + 1}", $"Matcap for material slot #{idx + 1}");

@@ -82,11 +82,6 @@ internal class ReplaceableMatcapObject
         }
         
         MaterialObject.SetColor(TintColorId, Color.white);
-        //MaterialObject.SetColor(HighlightTintColorId, tintColor ?? DefaultReflectionTint);
-        //MaterialObject.SetColor(ReflectionMultiplyId, (tintColor ?? DefaultReflectionTint) * Plugin.WheelReflectionIntensity.Value);
-        //MaterialObject.SetTexture(MatCapHighlightTexId, Texture2D.blackTexture);
-        //MaterialObject.SetTexture(ReflectionMapId, Plugin.BlankCubemap);
-
         MaterialObject.SetTexture(MatCapTexId, _customMatcap);
     }
 
